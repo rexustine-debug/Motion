@@ -271,7 +271,7 @@ if (!responseFrame) {
 let responseReceived = false;
 
 function handleRegistrationResponse(event) {
-  if (event.source !== responseFrame.contentWindow) return;
+  if (!/\.googleusercontent\.com$/.test(new URL(event.origin).hostname)) return;
 
   const message = event.data;
 
