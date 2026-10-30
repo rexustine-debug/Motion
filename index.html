@@ -186,7 +186,7 @@
     // BACKEND SETUP: Replace this with the HTTPS endpoint supplied by your backend developer.
     // Leave blank until the backend is built. This file alone does not save registrations to Google Sheets.
     const BACKEND_URL = "https://script.google.com/macros/s/AKfycbynTkbdsvdLusLvcvyOUo9TpOV6BVnPDnl8NGTtwPiZuGbxbDItszocg6MHO1sYtRg-/exec"; // Add your live registration backend HTTPS endpoint.
-    const TELEGRAM_REDIRECT_URL = "https://t.me/motionstudioAIhttps://t.me/motionstudioAI"; // set Telegram channel redirect url
+    const TELEGRAM_REDIRECT_URL = "https://t.me/motionstudioAI"; // Redirect participants to the official AI Masterclass Telegram channel after successful registration.
     const form = document.getElementById('registrationForm');
     const statusBox = document.getElementById('formStatus');
     const submitButton = document.getElementById('submitButton');
@@ -338,6 +338,7 @@ window.setTimeout(() => {
     );
   }
 }, 30000);
+    });
   </script>
 </body>
 </html>
