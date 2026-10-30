@@ -257,30 +257,88 @@
       }
 
       submitButton.disabled = true;
-      submitButton.textContent = 'Submitting…';
-      try {
-        const response = await fetch(BACKEND_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.message || 'Registration could not be completed.');
-        setStatus('Registration received! Redirecting you to Telegram…', 'info');
-        form.reset();
-        ['guardianBox','categoryOtherBox','objectiveOtherBox','challengeOtherBox'].forEach(id => document.getElementById(id).classList.remove('show'));
-        if (TELEGRAM_REDIRECT_URL && !TELEGRAM_REDIRECT_URL.includes('YourTelegramInviteLink')) {
-          window.setTimeout(() => { window.location.href = TELEGRAM_REDIRECT_URL; }, 1200);
-        } else {
-          setStatus('Registration received. Add your Telegram invite link in TELEGRAM_REDIRECT_URL to enable automatic redirection.', 'info');
-        }
-      } catch (error) {
-        setStatus(error.message || 'Something went wrong. Please try again.', 'error');
-      } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Submit Registration';
-      }
-    });
+submitButton.textContent = 'Submitting…';
+
+let responseFrame = document.getElementById('registrationResponseFrame');
+
+if (!responseFrame) {
+  responseFrame = document.createElement('iframe');
+  responseFrame.id = 'registrationResponseFrame';
+  responseFrame.name = 'registrationResponseFrame';
+  responseFrame.style.display = 'none';
+  document.body.appendChild(responseFrame);
+}
+
+let responseReceived = false;
+
+function handleRegistrationResponse(event) {
+  if (event.source !== responseFrame.contentWindow) return;
+
+  const message = event.data;
+
+  if (!message || message.type !== 'AIM_REGISTRATION_RESULT') return;
+
+  responseReceived = true;
+  window.removeEventListener('message', handleRegistrationResponse);
+
+  submitButton.disabled = false;
+  submitButton.textContent = 'Submit Registration';
+
+  if (message.result.success) {
+    setStatus(
+      'Registration successful! Your registration ID is ' +
+      message.result.registrationId + '.',
+      'info'
+    );
+
+    form.reset();
+
+    ['guardianBox','categoryOtherBox','objectiveOtherBox','challengeOtherBox']
+      .forEach(id => document.getElementById(id).classList.remove('show'));
+
+    if (TELEGRAM_REDIRECT_URL &&
+        !TELEGRAM_REDIRECT_URL.includes('YourTelegramInviteLink')) {
+      window.setTimeout(() => {
+        window.location.href = TELEGRAM_REDIRECT_URL;
+      }, 1500);
+    }
+  } else {
+    setStatus(
+      message.result.message || 'Registration could not be completed.',
+      'error'
+    );
+  }
+}
+
+window.addEventListener('message', handleRegistrationResponse);
+
+const transportForm = document.createElement('form');
+transportForm.method = 'POST';
+transportForm.action = BACKEND_URL;
+transportForm.target = 'registrationResponseFrame';
+transportForm.style.display = 'none';
+
+const payloadInput = document.createElement('input');
+payloadInput.type = 'hidden';
+payloadInput.name = 'payload';
+payloadInput.value = JSON.stringify(payload);
+
+transportForm.appendChild(payloadInput);
+document.body.appendChild(transportForm);
+transportForm.submit();
+transportForm.remove();
+
+window.setTimeout(() => {
+  if (!responseReceived) {
+    window.removeEventListener('message', handleRegistrationResponse);
+    submitButton.disabled = false;
+    submitButton.textContent = 'Submit Registration';
+    setStatus(
+      'We could not confirm your registration. Please try again.',
+      'error'
+    );
+  }
+}, 30000);
   </script>
 </body>
 </html>
